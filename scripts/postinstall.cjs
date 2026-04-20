@@ -326,8 +326,63 @@ async function downloadAndExtract() {
   }
 }
 
+// --- Skill installation ---
+
+function installBundledSkills() {
+  const skillsSrcDir = path.resolve(projectRoot, "skills")
+  if (!existsSync(skillsSrcDir)) {
+    return
+  }
+
+  const skillsDestDir = path.join(os.homedir(), ".claude", "skills")
+  mkdirSync(skillsDestDir, { recursive: true })
+
+  const entries = readdirSync(skillsSrcDir)
+  for (const entry of entries) {
+    if (entry === ".git") continue // skip git metadata
+    const src = path.join(skillsSrcDir, entry)
+    const dest = path.join(skillsDestDir, entry)
+    const stat = statSync(src)
+    if (!stat.isDirectory()) continue
+
+    // Remove existing if present (e.g., previous install)
+    rmSync(dest, { recursive: true, force: true })
+
+    // Copy directory recursively
+    copyDirRecursive(src, dest)
+
+    console.log(`[skills] Installed "${entry}" → ${dest}`)
+  }
+}
+
+function readdirSync(dir) {
+  try {
+    return require("fs").readdirSync(dir)
+  } catch {
+    return []
+  }
+}
+
+function copyDirRecursive(src, dest) {
+  mkdirSync(dest, { recursive: true })
+  const entries = require("fs").readdirSync(src)
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry)
+    const destPath = path.join(dest, entry)
+    const stat = statSync(srcPath)
+    if (stat.isDirectory()) {
+      copyDirRecursive(srcPath, destPath)
+    } else {
+      writeFileSync(destPath, readFileSync(srcPath))
+    }
+  }
+}
+
+// --- Main ---
+
 async function main() {
   await downloadAndExtract()
+  installBundledSkills()
 }
 
 main().catch((error) => {

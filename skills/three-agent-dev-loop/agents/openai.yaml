@@ -1,0 +1,4 @@
+interface:
+  display_name: "Three-Agent Dev Loop"
+  short_description: "Run implement-test-summary subagent loops"
+  default_prompt: "Use $three-agent-dev-loop to implement this requirement with an implementer, tester, and summarizer loop."
